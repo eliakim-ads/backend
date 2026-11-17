@@ -1,19 +1,15 @@
-
-import { Test, TestingModule } from '@nestjs/testing';
+// O health.controller.spec.ts testa o HealthController, que é responsável por fornecer informações sobre o status da API e do banco de dados.
+import { Test } from '@nestjs/testing';
 import { HealthController } from './health.controller';
-
-// Impede o carregamento do Prisma e de suas dependências
-jest.mock('./health.service', () => ({
-  HealthService: class HealthService {
-    check = jest.fn();
-  },
-}));
-
 import { HealthService } from './health.service';
+
+// Mantém o token de injeção sem carregar o serviço real e o Prisma.
+jest.mock('./health.service', () => ({
+  HealthService: class HealthService {},}));
 
 describe('HealthController', () => {
   let controller: HealthController;
-  let healthService: { check: jest.Mock };
+  const check = jest.fn<ReturnType<HealthService['check']>, []>();
 
   const mockResponse = {
     status: 'ok',
@@ -23,30 +19,20 @@ describe('HealthController', () => {
   };
 
   beforeEach(async () => {
-    healthService = {
-      check: jest.fn().mockResolvedValue(mockResponse),
-    };
+    check.mockReset().mockResolvedValue(mockResponse);
 
-    const module: TestingModule =
-      await Test.createTestingModule({
-        controllers: [HealthController],
-        providers: [
-          {
-            provide: HealthService,
-            useValue: healthService,
-          },
-        ],
-      }).compile();
+    const module = await Test.createTestingModule({
+      controllers: [HealthController],
+      providers: [{ provide: HealthService, useValue: { check } }],
+    }).compile();
 
-    controller = module.get<HealthController>(
-      HealthController,
-    );
+    controller = module.get(HealthController);
   });
 
   it('deve retornar o status da API', async () => {
     const result = await controller.check();
 
     expect(result).toEqual(mockResponse);
-    expect(healthService.check).toHaveBeenCalledTimes(1);
+    expect(check).toHaveBeenCalledTimes(1);
   });
 });

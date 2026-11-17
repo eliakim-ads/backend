@@ -1,12 +1,13 @@
 # DevFlix API
 
-API REST acadêmica para consultar as categorias de um catálogo de cursos de tecnologia. O projeto é a base do backend que um frontend ou cliente HTTP, como o Bruno, pode consumir.
+API REST acadêmica para consultar categorias, cursos e aulas de um catálogo de tecnologia. O projeto é a base do backend que um frontend ou cliente HTTP, como o Bruno, pode consumir.
 
 ## 1. Funcionalidades
 
 - Listar categorias armazenadas no PostgreSQL em ordem crescente de ID.
 - Verificar a conexão da API com o banco de dados em `GET /health`.
-- Carregar as três categorias de exemplo com um script SQL e cadastrar outras pelo Prisma Studio.
+- Listar cursos por título e consultar um curso pelo ID, incluindo a categoria e as aulas em ordem de posição.
+- Popular o catálogo de exemplo com o seed do Prisma e cadastrar outras categorias pelo Prisma Studio.
 
 ## 2. Tecnologias utilizadas
 
@@ -20,6 +21,7 @@ API REST acadêmica para consultar as categorias de um catálogo de cursos de te
 ```text
 src/
 ├── categories/           # Controller, service e módulo de categorias
+├── courses/              # Listagem e consulta de cursos com suas aulas
 ├── health/               # Verificação da conexão com o banco
 ├── prisma/               # Integração do Prisma com o NestJS
 ├── generated/prisma/     # Cliente Prisma gerado a partir do schema
@@ -27,7 +29,7 @@ src/
 prisma/
 ├── migrations/           # Histórico de migrações do PostgreSQL
 ├── schema.prisma         # Modelo de dados
-└── seed-categories.sql   # Categorias de exemplo
+└── seed.ts               # Categorias, cursos e aulas de exemplo
 API Devflix/              # Coleção de requisições do Bruno
 test/                     # Teste de ponta a ponta
 compose.yaml              # PostgreSQL, verificação de saúde e volume
@@ -94,14 +96,15 @@ docker compose ps
 
 Na primeira execução, o Docker baixa a imagem do PostgreSQL 17. O serviço `postgres` deve aparecer como saudável (`healthy`). Para investigar uma falha ao subir o banco, consulte `docker compose logs postgres`.
 
-### Aplicar a migração e cadastrar as categorias de exemplo
+### Aplicar as migrações e popular o catálogo de exemplo
 
 ```sh
 npx prisma migrate deploy
-npx prisma db execute --file prisma/seed-categories.sql
+npx prisma generate
+npx prisma db seed
 ```
 
-A migração cria a tabela `Category` no banco novo. O segundo comando cadastra Desenvolvimento Frontend, Desenvolvimento Backend e Banco de Dados. É possível repeti-lo, pois o script preserva as categorias que já têm os mesmos slugs.
+As migrações criam `Category`, `Course` e `Lesson`. Em um banco da etapa anterior, apenas a migração pendente é aplicada. O seed cadastra três categorias, três cursos e quatro aulas de exemplo. Ao repetir o comando, o Prisma atualiza os registros correspondentes pelos slugs e pela posição de cada aula no curso.
 
 ### Iniciar a API
 
@@ -124,8 +127,10 @@ O volume `postgres_data` mantém os dados na máquina atual. Na outra máquina, 
 | GET | `/` | `200 OK` com o texto `Hello World!`. |
 | GET | `/health` | `200 OK` com o estado da aplicação e da conexão com o banco. |
 | GET | `/categories` | `200 OK` com um array JSON de categorias. O array é vazio quando a tabela está vazia. |
+| GET | `/courses` | `200 OK` com os cursos, suas categorias e aulas ordenadas por posição. |
+| GET | `/courses/:id` | `200 OK` com o curso solicitado, `400` para parâmetro inválido ou `404` para curso inexistente. |
 
-As três rotas são públicas no ambiente local. Uma rota inexistente retorna `404`. Uma falha inesperada durante uma consulta pode retornar `500`. Se a conexão com o banco falhar na inicialização, confira o terminal da API e o estado do serviço `postgres`.
+As rotas são públicas no ambiente local. Uma rota inexistente retorna `404`. Uma falha inesperada durante uma consulta pode retornar `500`. Se a conexão com o banco falhar na inicialização, confira o terminal da API e o estado do serviço `postgres`.
 
 ## 9. Exemplo de requisição e resposta
 
@@ -133,9 +138,12 @@ No Bruno, abra a coleção da pasta `API Devflix`, selecione **Listar Categorias
 
 ```powershell
 curl.exe -i http://127.0.0.1:3000/categories
+curl.exe -i http://127.0.0.1:3000/courses
 ```
 
-Exemplo de resposta quando há uma categoria cadastrada:
+Para consultar um curso específico, use um ID retornado pela listagem em `GET /courses/:id`. Os IDs podem variar entre instalações.
+
+Exemplo de resposta de `GET /categories` quando há uma categoria cadastrada:
 
 ```json
 [
@@ -161,6 +169,10 @@ Exemplo de resposta quando há uma categoria cadastrada:
 
 Para adicionar uma categoria, rode `npx prisma studio` com o PostgreSQL ativo. Abra a tabela **Category**, preencha `name` e um `slug` único, salve e consulte `GET /categories` novamente.
 
+Uma categoria pode ter vários cursos. Cada `Course` pertence a uma categoria, tem slug único e começa como rascunho por padrão (`published: false`). O PostgreSQL impede excluir uma categoria que ainda tem cursos vinculados.
+
+Cada `Lesson` pertence a um curso, guarda um ID de vídeo do YouTube e tem uma posição única dentro do curso. Ao excluir um curso, o PostgreSQL exclui suas aulas vinculadas.
+
 ## 11. Testes
 
 ```sh
@@ -171,7 +183,7 @@ npm run test:cov
 
 O projeto inclui testes unitários para componentes da API e um teste de ponta a ponta para `GET /`. Para o teste de ponta a ponta, deixe o PostgreSQL ativo e configure o `.env`, pois o teste inicializa o módulo principal da aplicação.
 
-Na configuração atual, as duas suítes unitárias de categorias falham quando o Jest tenta carregar `@nestjs/config`, que usa módulos ES. Para validar a listagem com o banco local, use a requisição da seção 9.
+Os testes de `CoursesService` usam um mock do Prisma para verificar a listagem, a busca por ID e o erro para um curso inexistente. Eles podem rodar com o banco desligado.
 
 ## 12. Extras de Programação Web 2
 
