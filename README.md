@@ -1,98 +1,191 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# DevFlix API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST acadêmica para consultar as categorias de um catálogo de cursos de tecnologia. O projeto é a base do backend que um frontend ou cliente HTTP, como o Bruno, pode consumir.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 1. Funcionalidades
 
-## Description
+- Listar categorias armazenadas no PostgreSQL em ordem crescente de ID.
+- Verificar a conexão da API com o banco de dados em `GET /health`.
+- Carregar as três categorias de exemplo com um script SQL e cadastrar outras pelo Prisma Studio.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 2. Tecnologias utilizadas
 
-## Project setup
+- Node.js, NestJS e TypeScript para a API.
+- PostgreSQL 17 para persistência e Prisma ORM 7 para consultas e migrações.
+- Docker e Docker Compose para executar o PostgreSQL localmente.
+- Jest e Supertest para testes e Bruno para requisições manuais.
 
-```bash
-$ npm install
+## 3. Organização do projeto
+
+```text
+src/
+├── categories/           # Controller, service e módulo de categorias
+├── health/               # Verificação da conexão com o banco
+├── prisma/               # Integração do Prisma com o NestJS
+├── generated/prisma/     # Cliente Prisma gerado a partir do schema
+└── main.ts               # Inicialização da API
+prisma/
+├── migrations/           # Histórico de migrações do PostgreSQL
+├── schema.prisma         # Modelo de dados
+└── seed-categories.sql   # Categorias de exemplo
+API Devflix/              # Coleção de requisições do Bruno
+test/                     # Teste de ponta a ponta
+compose.yaml              # PostgreSQL, verificação de saúde e volume
+.env.example              # Configuração local de exemplo
 ```
 
-## Compile and run the project
+## 4. Pré-requisitos na outra máquina
 
-```bash
-# development
-$ npm run start
+- Node.js 24 e npm.
+- Git, se você for clonar o repositório.
+- Docker Desktop no Windows ou macOS. No Linux, Docker Engine em execução com o plugin Docker Compose.
+- Portas locais `5432` para o PostgreSQL e `3000` para a API.
 
-# watch mode
-$ npm run start:dev
+Abra o Docker Desktop e aguarde a inicialização. Os comandos abaixo verificam se o Docker Compose está disponível e se o Docker responde.
 
-# production mode
-$ npm run start:prod
+```sh
+docker compose version
+docker info
 ```
 
-## Run tests
+O Docker Compose inicia o PostgreSQL. A API roda com Node.js na própria máquina.
 
-```bash
-# unit tests
-$ npm run test
+## 5. Instalação
 
-# e2e tests
-$ npm run test:e2e
+Clone o repositório e instale as dependências. Se você copiou a pasta do projeto, execute apenas `npm ci` na pasta que contém `package.json` e `compose.yaml`. Antes de clonar na outra máquina, confirme que a branch escolhida já contém os arquivos de configuração descritos neste README.
 
-# test coverage
-$ npm run test:cov
+```sh
+git clone https://github.com/eliakim-ads/backend.git
+cd backend
+npm ci
 ```
 
-## Deployment
+## 6. Variáveis de ambiente
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Na pasta do projeto, copie `.env.example` para `.env`. Se já existir um `.env`, confira se o endereço do banco corresponde ao serviço em `compose.yaml`.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+No PowerShell:
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```powershell
+Copy-Item .env.example .env
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+No Linux ou macOS:
 
-## Resources
+```sh
+cp .env.example .env
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+| Variável | Uso |
+| --- | --- |
+| `DATABASE_URL` | Conexão do Prisma com o banco local em `127.0.0.1:5432`. O arquivo de exemplo já corresponde ao Compose. |
+| `PORT` | Porta HTTP da API. É opcional e o padrão é `3000`. |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+As credenciais de exemplo são para desenvolvimento local. O arquivo `.env` está no `.gitignore`.
 
-## Support
+## 7. Executar o DevFlix
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Subir o PostgreSQL
 
-## Stay in touch
+```sh
+docker compose up -d --wait
+docker compose ps
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Na primeira execução, o Docker baixa a imagem do PostgreSQL 17. O serviço `postgres` deve aparecer como saudável (`healthy`). Para investigar uma falha ao subir o banco, consulte `docker compose logs postgres`.
 
-## License
+### Aplicar a migração e cadastrar as categorias de exemplo
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```sh
+npx prisma migrate deploy
+npx prisma db execute --file prisma/seed-categories.sql
+```
+
+A migração cria a tabela `Category` no banco novo. O segundo comando cadastra Desenvolvimento Frontend, Desenvolvimento Backend e Banco de Dados. É possível repeti-lo, pois o script preserva as categorias que já têm os mesmos slugs.
+
+### Iniciar a API
+
+```sh
+npm run start:dev
+```
+
+Deixe o terminal aberto e acesse [a verificação de saúde](http://127.0.0.1:3000/health) ou [a lista de categorias](http://127.0.0.1:3000/categories) na mesma máquina.
+
+### Parar e retomar
+
+Encerre a API com `Ctrl+C`. Para parar o banco, execute `docker compose stop`. Ao voltar, rode `docker compose up -d --wait` e `npm run start:dev`.
+
+O volume `postgres_data` mantém os dados na máquina atual. Na outra máquina, o Compose cria um volume novo. O script SQL carrega os dados de exemplo, e um backup do PostgreSQL é necessário para levar também as categorias cadastradas manualmente.
+
+## 8. Endpoints da API
+
+| Método | Endpoint | Resposta esperada |
+| --- | --- | --- |
+| GET | `/` | `200 OK` com o texto `Hello World!`. |
+| GET | `/health` | `200 OK` com o estado da aplicação e da conexão com o banco. |
+| GET | `/categories` | `200 OK` com um array JSON de categorias. O array é vazio quando a tabela está vazia. |
+
+As três rotas são públicas no ambiente local. Uma rota inexistente retorna `404`. Uma falha inesperada durante uma consulta pode retornar `500`. Se a conexão com o banco falhar na inicialização, confira o terminal da API e o estado do serviço `postgres`.
+
+## 9. Exemplo de requisição e resposta
+
+No Bruno, abra a coleção da pasta `API Devflix`, selecione **Listar Categorias** e clique em **Send**. A requisição usa `GET` e tem corpo vazio. Também é possível testar pelo PowerShell.
+
+```powershell
+curl.exe -i http://127.0.0.1:3000/categories
+```
+
+Exemplo de resposta quando há uma categoria cadastrada:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Desenvolvimento Frontend",
+    "slug": "frontend",
+    "createdAt": "2026-11-17T01:17:06.174Z",
+    "updatedAt": "2026-11-17T01:17:06.174Z"
+  }
+]
+```
+
+## 10. Modelo de dados e regras de negócio
+
+| Campo de `Category` | Tipo e regra |
+| --- | --- |
+| `id` | Inteiro, chave primária gerada automaticamente. |
+| `name` | Texto obrigatório com o nome da categoria. |
+| `slug` | Texto obrigatório e único, como `frontend`. |
+| `createdAt` | Data e hora de criação, preenchida automaticamente. |
+| `updatedAt` | Data e hora da última atualização, gerenciada pelo Prisma nas operações feitas pelo cliente. |
+
+Para adicionar uma categoria, rode `npx prisma studio` com o PostgreSQL ativo. Abra a tabela **Category**, preencha `name` e um `slug` único, salve e consulte `GET /categories` novamente.
+
+## 11. Testes
+
+```sh
+npm test
+npm run test:e2e
+npm run test:cov
+```
+
+O projeto inclui testes unitários para componentes da API e um teste de ponta a ponta para `GET /`. Para o teste de ponta a ponta, deixe o PostgreSQL ativo e configure o `.env`, pois o teste inicializa o módulo principal da aplicação.
+
+Na configuração atual, as duas suítes unitárias de categorias falham quando o Jest tenta carregar `@nestjs/config`, que usa módulos ES. Para validar a listagem com o banco local, use a requisição da seção 9.
+
+## 12. Extras de Programação Web 2
+
+- **Docker Compose** reproduz o PostgreSQL em outras máquinas e mantém os dados em um volume local.
+- **Migrações versionadas** permitem criar a estrutura da tabela a partir de um banco vazio.
+- **Bruno** oferece uma requisição pronta para testar a listagem.
+
+## 13. Versionamento acadêmico
+
+O modelo da disciplina prevê uma branch semanal no formato `branch_yyyymmdd`, criada a partir da `main`. Registre as alterações em commits com mensagens claras e integre a branch à `main` ao concluir a atividade.
+
+## 14. Autor e uso acadêmico
+
+- **Autor** · [eliakim-ads](https://github.com/eliakim-ads)
+- **Unidade curricular** · Programação Web 2, Senac RJ
+
+Projeto desenvolvido para fins acadêmicos.
